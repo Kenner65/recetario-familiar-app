@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { cerrarSesion as apiCerrarSesion, iniciarSesion, registrar, type Usuario } from '../api/auth';
+import { cerrarSesion as apiCerrarSesion, iniciarSesion, obtenerUsuario, registrar, type Usuario } from '../api/auth';
+import { SesionExpiradaError } from '../api/client';
+import { tieneApiConfigurada } from '../api/config';
 import { obtenerSesion } from '../api/session';
 
 interface SesionContexto {
@@ -24,8 +26,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const sesion = await obtenerSesion();
+        if (!sesion) {
+          return;
+        }
         if (activo) {
-          setAutenticado(!!sesion);
+          setAutenticado(true);
+        }
+        // Recupera el usuario del token para mostrarlo tras reiniciar la app.
+        if (tieneApiConfigurada()) {
+          try {
+            const u = await obtenerUsuario();
+            if (activo) {
+              setUsuario(u);
+            }
+          } catch (error) {
+            if (error instanceof SesionExpiradaError && activo) {
+              setAutenticado(false);
+              setUsuario(null);
+            }
+          }
         }
       } catch {
         // sin secure-store disponible: se trata como no autenticado.

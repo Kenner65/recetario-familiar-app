@@ -6,12 +6,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
 import { RecetaCard } from '@/components/RecetaCard';
+import { tieneApiConfigurada } from '@/api/config';
 import { Colores, Espaciado, Radio, Tipografia } from '@/constants/theme';
+import { useSesion } from '@/context/session';
 import { recetaService } from '@/services/recetaService';
+import { sincronizar } from '@/services/syncService';
 import type { Receta } from '@/types/receta';
 
 export default function ListaRecetas() {
   const router = useRouter();
+  const { autenticado } = useSesion();
   const [texto, setTexto] = useState('');
   const [recetas, setRecetas] = useState<Receta[]>([]);
 
@@ -22,8 +26,15 @@ export default function ListaRecetas() {
   useFocusEffect(
     useCallback(() => {
       cargar(texto);
+      if (autenticado && tieneApiConfigurada()) {
+        sincronizar()
+          .then(() => cargar(texto))
+          .catch(() => {
+            // sin conexión o sesión expirada: se sigue usando el modo local
+          });
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cargar]),
+    }, [cargar, autenticado]),
   );
 
   const alCambiarTexto = (valor: string) => {

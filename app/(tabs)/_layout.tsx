@@ -27,6 +27,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="star" size={size} color={color as string} />,
         }}
       />
+      <Tabs.Screen
+        name="cuenta"
+        options={{
+          title: 'Cuenta',
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" size={size} color={color as string} />,
+        }}
+      />
     </Tabs>
   );
 }
